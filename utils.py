@@ -1,6 +1,6 @@
 import numpy as np
 import bcolz
-import cpickle as pickle
+import pickle
 
 def save_array(fname, arr):
     c = bcolz.carray(arr, rootdir=fname, mode='w')

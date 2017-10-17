@@ -3,7 +3,8 @@ from torch.utils.data import DataLoader
 from glob import glob
 
 def get_babi_task(dpath, task_id):
-    fpaths = glob(f'{dpath}/{qa}_*')
+    fpaths = glob(f'{dpath}/qa{task_id}_*')
+    if not fpaths: print('No files')
     for fpath in fpaths:
         if 'train' in fpath:
             with open(fpath, 'r') as fp:
@@ -32,10 +33,10 @@ def get_unindexed_qa(raw):
             count += 1
         else:
             qidx = line.find('?')
-            tmp = line[qidx+1:].sxplit('\t')
+            tmp = line[qidx+1:].split('\t')
             task['Q'] = line[:qidx]
             task['A'] = tmp[1].strip()
-            task['S'] = [id_map[int(o.strip())] for o in tmp[2]]
+            task['S'] = [id_map[int(o.strip())] for o in tmp[2].split()]
             tc = task.copy()
             tc['C'] = tc['C'].split('<line>')[:-1]
             tasks.append(tc)
@@ -48,11 +49,11 @@ def format_sentence(sent):
 
 # adapted from https://github.com/dandelin/Dynamic-memory-networks-plus-Pytorch
 class BabiDataset(Dataset):
-    def __init__(self, dpath, task_id, mode='train'):
-        self.vocab_path = f'dpath/babi{tast_id}_vocab.pkl'
+    def __init__(self, dpath='/home/mark/data/datasets/nlp/babi/tasks_1-20_v1-2/en-10k', task_id=1, mode='train'):
+        self.vocab_path = f'dpath/babi{task_id}_vocab.pkl'
         self.mode = mode
         self.vocab = {'<PAD>': 0, '<EOS>': 1}
-        train_raw, test_raw = get_babi_task(task_id)
+        train_raw, test_raw = get_babi_task(dpath, task_id)
         self.train = self.index_task(train_raw)
         self.test = self.index_task(test_raw)
     
@@ -87,7 +88,7 @@ class BabiDataset(Dataset):
             for token in question: self.build_vocab(token)
             question = [self.vocab[token] for token in question]
             # anwer
-            self.build_vocab(qa['A'.lower()])
+            self.build_vocab(qa['A'].lower())
             anwer = self.vocab[qa['A'].lower()]
 
             contexts.append(context)
