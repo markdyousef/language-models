@@ -1,6 +1,8 @@
 from torch.utils.data.dataset import Dataset
 from torch.utils.data import DataLoader
+from torch.utils.data.dataloader import default_collate
 from glob import glob
+import numpy as np
 
 def pad_collate(batch):
     max_context_sen_len = float('-inf')
@@ -75,18 +77,24 @@ class BabiDataset(Dataset):
         self.mode = mode
         self.vocab = {'<PAD>': 0, '<EOS>': 1}
         train_raw, test_raw = get_babi_task(dpath, task_id)
-        self.train = self.index_task(train_raw)
+        train = self.index_task(train_raw)
+        self.train = [train[i][:int(9*len(train[i])/10)] for i in range(3)]
+        self.valid = [train[i][int(-len(train[i])/10):] for i in range(3)]
         self.test = self.index_task(test_raw)
     
     def __len__(self):
         if self.mode == 'train':
             return len(self.train[0])
+        elif self.mode == 'valid':
+            return len(self.valid[0])
         elif self.mode == 'test':
             return len(self.test[0])
     
     def __getitem__(self, index):
         if self.mode == 'train':
             contexts, questions, answers = self.train
+        elif self.mode == 'valid':
+            contexts, questions, answers = self.valid
         elif self.mode == 'test':
             contexts, questions, answers = self.test
         return contexts[index], questions[index], answers[index]

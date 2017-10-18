@@ -1,2 +1,5 @@
 .ipynb_*
 __pycache__/
+results/
+models/
+checkpoint.pth.tar
